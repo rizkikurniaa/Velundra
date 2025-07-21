@@ -48,23 +48,35 @@ class MainActivity : AppCompatActivity() {
     private fun setupUI(player: PlayerEntity) {
         binding.tvHero.text =
             "🧝 ${player.username} (Class: ${player.heroClass})\nHP: ${player.hp}/${player.maxHp} | LV: ${player.level} | ATK: ${player.atk} | EXP: ${player.exp}/100"
-
-        // Tombol bisa dihubungkan ke logika GameViewModel atau buat logikamu sendiri
-        binding.btnAttack.setOnClickListener {
-            Toast.makeText(this, "Serangan diklik (implementasi menyusul)", Toast.LENGTH_SHORT).show()
-        }
-
-        binding.btnHeal.setOnClickListener {
-            Toast.makeText(this, "Penyembuhan diklik (implementasi menyusul)", Toast.LENGTH_SHORT).show()
-        }
-
-        binding.btnRestart.setOnClickListener {
-            Toast.makeText(this, "Reset game (implementasi menyusul)", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun setupGameLogic(player: PlayerEntity) {
-        // Nanti bisa diteruskan ke gameViewModel.loadPlayer(player)
-        // Lalu logic game jalan seperti sebelumnya
+        gameViewModel.loadPlayer(player)
+
+        gameViewModel.player.observe(this) { updatedPlayer ->
+            binding.tvHero.text =
+                "🧝 ${updatedPlayer.username} (Class: ${updatedPlayer.heroClass})\n" +
+                        "HP: ${updatedPlayer.hp}/${updatedPlayer.maxHp} | LV: ${updatedPlayer.level} | " +
+                        "ATK: ${updatedPlayer.atk} | EXP: ${updatedPlayer.exp}/100"
+        }
+
+        gameViewModel.enemyHp.observe(this) { enemyHp ->
+            binding.tvMonster.text = "👹 Enemy HP: $enemyHp"
+        }
+
+        binding.btnAttack.setOnClickListener {
+            gameViewModel.attackEnemy()
+            Toast.makeText(this, "Menyerang musuh!", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnHeal.setOnClickListener {
+            gameViewModel.healPlayer()
+            Toast.makeText(this, "Menyembuhkan diri!", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnRestart.setOnClickListener {
+            gameViewModel.resetGame()
+            Toast.makeText(this, "Game direset!", Toast.LENGTH_SHORT).show()
+        }
     }
 }

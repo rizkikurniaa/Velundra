@@ -1,76 +1,76 @@
 package com.velundra.viewmodel
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.velundra.model.Hero
-import com.velundra.model.Monster
+import com.velundra.data.PlayerEntity
+import kotlin.math.max
 import kotlin.math.min
 
 class GameViewModel : ViewModel() {
 
-    val hero = MutableLiveData<Hero>()
-    val monster = MutableLiveData<Monster>()
-    val isGameOver = MutableLiveData<Boolean>()
+    private val _player = MutableLiveData<PlayerEntity>()
+    val player: LiveData<PlayerEntity> get() = _player
 
-    init {
-        hero.value = Hero("Knight", 100, 100, 20, 1, 0)
-        spawnMonster()
-        isGameOver.value = false
+    private val _enemyHp = MutableLiveData<Int>(50)
+    val enemyHp: LiveData<Int> get() = _enemyHp
+
+    fun loadPlayer(player: PlayerEntity) {
+        _player.value = player
     }
 
-    fun attack() {
-        val h = hero.value ?: return
-        val m = monster.value ?: return
-        if (h.hp <= 0) return
+    fun attackEnemy() {
+        val current = _player.value ?: return
+        val newEnemyHp = (_enemyHp.value ?: 0) - current.atk
 
-        // Hero menyerang dulu
-        m.hp = maxOf(0, m.hp - h.atk)
+        // Tambahkan EXP saat serang
+        val newExp = current.exp + 10
+        var updatedPlayer = current.copy(exp = newExp)
 
-        // Jika monster mati
-        if (m.hp == 0) {
-            gainExp(m.expDrop)
-            spawnMonster()
-            return  // jangan lanjut karena monster baru sudah muncul
+        // Naik level kalau exp >= 100
+        if (newExp >= 100) {
+            updatedPlayer = updatedPlayer.copy(
+                level = updatedPlayer.level + 1,
+                exp = 0,
+                atk = updatedPlayer.atk + 2,
+                maxHp = updatedPlayer.maxHp + 10,
+                hp = updatedPlayer.maxHp + 10
+            )
         }
 
-        // Kalau monster belum mati, dia serang balik
-        h.hp = maxOf(0, h.hp - m.atk)
-        if (h.hp == 0) {
-            isGameOver.value = true
+        _player.value = updatedPlayer
+
+        if (newEnemyHp <= 0) {
+            _enemyHp.value = 50 // respawn monster
+        } else {
+            _enemyHp.value = newEnemyHp
         }
 
-        hero.value = h
-        monster.value = m  // hanya update monster kalau belum diganti
+        // Monster balas serang
+        enemyAttack()
     }
 
+    private fun enemyAttack() {
+        val current = _player.value ?: return
+        val newHp = max(0, current.hp - 5) // monster serang 5
 
-    fun heal() {
-        val h = hero.value ?: return
-        h.hp = min(h.maxHp, h.hp + 30)
-        hero.value = h
+        _player.value = current.copy(hp = newHp)
     }
 
-    private fun gainExp(exp: Int) {
-        val h = hero.value ?: return
-        h.exp += exp
-        if (h.exp >= 100) {
-            h.level++
-            h.exp = 0
-            h.maxHp += 20
-            h.hp = h.maxHp
-            h.atk += 5
-        }
-        hero.value = h
-    }
-
-    private fun spawnMonster() {
-        val newMonster = Monster("Goblin", 50, 10, 40)
-        monster.value = newMonster
+    fun healPlayer() {
+        val current = _player.value ?: return
+        val healedHp = min(current.maxHp, current.hp + 15)
+        _player.value = current.copy(hp = healedHp)
     }
 
     fun resetGame() {
-        hero.value = Hero("Knight", 100, 100, 20, 1, 0)
-        spawnMonster()
-        isGameOver.value = false
+        val current = _player.value ?: return
+        _player.value = current.copy(
+            hp = current.maxHp,
+            exp = 0,
+            level = 1,
+            atk = 10
+        )
+        _enemyHp.value = 50
     }
 }
