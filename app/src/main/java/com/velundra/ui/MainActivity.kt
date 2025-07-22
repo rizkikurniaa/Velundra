@@ -67,8 +67,18 @@ class MainActivity : BaseActivity() {
                         "ATK: ${updatedPlayer.atk} | EXP: ${updatedPlayer.exp}/100"
         }
 
-        gameViewModel.enemyHp.observe(this) { enemyHp ->
-            binding.tvMonster.text = "👹 Enemy HP: $enemyHp"
+        gameViewModel.enemy.observe(this) { enemy ->
+            binding.tvMonster.text =
+                "👹 ${enemy.name} - HP: ${enemy.currentHp}/${enemy.maxHp} | ATK: ${enemy.atk}"
+        }
+
+        gameViewModel.gameOver.observe(this) { isOver ->
+            if (isOver) {
+                Toast.makeText(this, "Game Over! Kamu kalah!", Toast.LENGTH_LONG).show()
+                // Optional: disable tombol atau kembali ke menu
+                binding.btnAttack.isEnabled = false
+                binding.btnHeal.isEnabled = false
+            }
         }
 
         binding.btnAttack.setOnClickListener {
