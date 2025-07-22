@@ -4,17 +4,22 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.velundra.data.PlayerDatabase
 import com.velundra.data.PlayerEntity
 import com.velundra.databinding.ActivityMainBinding
+import com.velundra.utils.BaseActivity
 import com.velundra.viewmodel.GameViewModel
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val gameViewModel: GameViewModel by viewModels()
+    private val gameViewModel: GameViewModel by viewModels {
+        ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+    }
+
     private var playerId: Int = -1
     private var currentPlayer: PlayerEntity? = null
 
@@ -22,6 +27,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        applyEdgeToEdgeInsets(binding.layoutRoot, applyBottomPadding = true)
 
         playerId = intent.getIntExtra("player_id", -1)
         if (playerId == -1) {

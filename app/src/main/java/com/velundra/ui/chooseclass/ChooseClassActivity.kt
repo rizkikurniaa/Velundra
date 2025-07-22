@@ -6,9 +6,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.velundra.data.PlayerEntity
 import com.velundra.databinding.ActivityChooseClassBinding
+import com.velundra.utils.BaseActivity
 import com.velundra.viewmodel.PlayerViewModel
 
-class ChooseClassActivity : AppCompatActivity() {
+class ChooseClassActivity : BaseActivity() {
     private lateinit var binding: ActivityChooseClassBinding
     private val playerViewModel: PlayerViewModel by viewModels()
 
@@ -16,6 +17,9 @@ class ChooseClassActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityChooseClassBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        applyEdgeToEdgeInsets(binding.layoutRoot, applyBottomPadding = true)
 
         binding.btnCreate.setOnClickListener {
             val name = binding.etName.text.toString()

@@ -1,18 +1,24 @@
 package com.velundra.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.velundra.data.PlayerDatabase
 import com.velundra.data.PlayerEntity
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
-class GameViewModel : ViewModel() {
+class GameViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val dao = PlayerDatabase.getDatabase(application).playerDao()
 
     private val _player = MutableLiveData<PlayerEntity>()
     val player: LiveData<PlayerEntity> get() = _player
 
-    private val _enemyHp = MutableLiveData<Int>(50)
+    private val _enemyHp = MutableLiveData(50)
     val enemyHp: LiveData<Int> get() = _enemyHp
 
     fun loadPlayer(player: PlayerEntity) {
@@ -21,56 +27,65 @@ class GameViewModel : ViewModel() {
 
     fun attackEnemy() {
         val current = _player.value ?: return
-        val newEnemyHp = (_enemyHp.value ?: 0) - current.atk
+        val newEnemyHp = (enemyHp.value ?: 0) - current.atk
 
-        // Tambahkan EXP saat serang
-        val newExp = current.exp + 10
+        var newExp = current.exp + 10
         var updatedPlayer = current.copy(exp = newExp)
 
-        // Naik level kalau exp >= 100
         if (newExp >= 100) {
             updatedPlayer = updatedPlayer.copy(
-                level = updatedPlayer.level + 1,
+                level = current.level + 1,
                 exp = 0,
-                atk = updatedPlayer.atk + 2,
-                maxHp = updatedPlayer.maxHp + 10,
-                hp = updatedPlayer.maxHp + 10
+                atk = current.atk + 2,
+                maxHp = current.maxHp + 10,
+                hp = current.maxHp + 10
             )
         }
 
         _player.value = updatedPlayer
 
+        viewModelScope.launch {
+            dao.updatePlayer(updatedPlayer)
+        }
+
         if (newEnemyHp <= 0) {
-            _enemyHp.value = 50 // respawn monster
+            _enemyHp.value = 50
         } else {
             _enemyHp.value = newEnemyHp
         }
 
-        // Monster balas serang
         enemyAttack()
     }
 
     private fun enemyAttack() {
         val current = _player.value ?: return
-        val newHp = max(0, current.hp - 5) // monster serang 5
+        val newHp = max(0, current.hp - 5)
+        val updated = current.copy(hp = newHp)
+        _player.value = updated
 
-        _player.value = current.copy(hp = newHp)
+        viewModelScope.launch {
+            dao.updatePlayer(updated)
+        }
     }
 
     fun healPlayer() {
         val current = _player.value ?: return
-        val healedHp = min(current.maxHp, current.hp + 15)
-        _player.value = current.copy(hp = healedHp)
+        val healed = current.copy(hp = min(current.maxHp, current.hp + 15))
+        _player.value = healed
+
+        viewModelScope.launch {
+            dao.updatePlayer(healed)
+        }
     }
 
     fun resetGame() {
         val current = _player.value ?: return
-        _player.value = current.copy(
-            hp = current.maxHp,
-            exp = 0,
-            level = 1,
-            atk = 10
-        )
+        val reset = current.copy(level = 1, hp = current.maxHp, exp = 0, atk = 10)
+        _player.value = reset
         _enemyHp.value = 50
+
+        viewModelScope.launch {
+            dao.updatePlayer(reset)
+        }
     }
 }

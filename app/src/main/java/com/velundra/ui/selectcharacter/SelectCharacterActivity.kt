@@ -9,8 +9,9 @@ import com.velundra.databinding.ActivitySelectCharacterBinding
 import com.velundra.viewmodel.PlayerViewModel
 import com.velundra.ui.MainActivity
 import com.velundra.ui.chooseclass.ChooseClassActivity
+import com.velundra.utils.BaseActivity
 
-class SelectCharacterActivity : AppCompatActivity() {
+class SelectCharacterActivity : BaseActivity() {
 
     private lateinit var binding: ActivitySelectCharacterBinding
     private lateinit var adapter: CharacterAdapter
@@ -20,6 +21,8 @@ class SelectCharacterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySelectCharacterBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        applyEdgeToEdgeInsets(binding.layoutRoot, applyBottomPadding = true)
 
         adapter = CharacterAdapter { player ->
             val intent = Intent(this, MainActivity::class.java)

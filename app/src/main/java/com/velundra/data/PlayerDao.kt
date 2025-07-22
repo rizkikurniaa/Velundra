@@ -16,4 +16,8 @@ interface PlayerDao {
 
     @Delete
     suspend fun delete(player: PlayerEntity)
+
+    @Update
+    suspend fun updatePlayer(player: PlayerEntity)
+
 }
