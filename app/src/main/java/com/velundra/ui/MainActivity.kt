@@ -1,5 +1,6 @@
 package com.velundra.ui
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -65,6 +66,14 @@ class MainActivity : BaseActivity() {
                 "🧝 ${updatedPlayer.username} (Class: ${updatedPlayer.heroClass})\n" +
                         "HP: ${updatedPlayer.hp}/${updatedPlayer.maxHp} | LV: ${updatedPlayer.level} | " +
                         "ATK: ${updatedPlayer.atk} | EXP: ${updatedPlayer.exp}/100"
+
+            // Tambahkan pengecekan HP <= 0
+            if (updatedPlayer.hp <= 0) {
+                showGameOverDialog()
+                setButtonsEnabled(false)
+            } else {
+                setButtonsEnabled(true)
+            }
         }
 
         gameViewModel.enemy.observe(this) { enemy ->
@@ -96,4 +105,19 @@ class MainActivity : BaseActivity() {
             Toast.makeText(this, "Game direset!", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun setButtonsEnabled(enabled: Boolean) {
+        binding.btnAttack.isEnabled = enabled
+        binding.btnHeal.isEnabled = enabled
+        binding.btnRestart.isEnabled = enabled
+    }
+
+    private fun showGameOverDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Game Over")
+            .setMessage("Karakter kamu telah kalah.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
 }
